@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-import config
+import nn_config
 from copy import deepcopy
 from get_preds import get_preds
 import core
@@ -70,8 +70,8 @@ class MCTS():
 
 			#calculates max QU
 			if currentNode == self.root:
-				epsilon = config.EPSILON
-				nu = np.random.dirichlet([config.ALPHA] * len(currentNode.edges))
+				epsilon = nn_config.EPSILON
+				nu = np.random.dirichlet([nn_config.ALPHA] * len(currentNode.edges))
 			else:
 				epsilon = 0
 				nu = [0] * len(currentNode.edges)

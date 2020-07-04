@@ -3,7 +3,7 @@ import tensorflow as tensorflow
 # %matplotlib inline
 
 import logging
-import config
+import nn_config
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -14,13 +14,9 @@ from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, BatchNormaliz
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras import regularizers
 
-from SPLT_loss import softmax_cross_entropy_with_logits
-
-import loggers as lg
+from splt_loss import softmax_cross_entropy_with_logits
 
 import keras.backend as K
-
-from settings import run_folder, run_archive_folder
 
 class Gen_Model():
 	def __init__(self, reg_const, learning_rate, input_dim, output_dim):
@@ -34,29 +30,6 @@ class Gen_Model():
 
 	def fit(self, states, targets, epochs, verbose, validation_split, batch_size):
 		return self.model.fit(states, targets, epochs=epochs, verbose=verbose, validation_split = validation_split, batch_size = batch_size)
-
-	def write(self, game, version):
-		self.model.save(run_folder + 'models/version' + "{0:0>4}".format(version) + '.h5')
-
-	def read(self, game, run_number, version):
-		return load_model( run_archive_folder + game + '/run' + str(run_number).zfill(4) + "/models/version" + "{0:0>4}".format(version) + '.h5', custom_objects={'softmax_cross_entropy_with_logits': softmax_cross_entropy_with_logits})
-
-	def printWeightAverages(self):
-		layers = self.model.layers
-		for i, l in enumerate(layers):
-			try:
-				x = l.get_weights()[0]
-				lg.logger_model.info('WEIGHT LAYER %d: ABSAV = %f, SD =%f, ABSMAX =%f, ABSMIN =%f', i, np.mean(np.abs(x)), np.std(x), np.max(np.abs(x)), np.min(np.abs(x)))
-			except:
-				pass
-		lg.logger_model.info('------------------')
-		for i, l in enumerate(layers):
-			try:
-				x = l.get_weights()[1]
-				lg.logger_model.info('BIAS LAYER %d: ABSAV = %f, SD =%f, ABSMAX =%f, ABSMIN =%f', i, np.mean(np.abs(x)), np.std(x), np.max(np.abs(x)), np.min(np.abs(x)))
-			except:
-				pass
-		lg.logger_model.info('******************')
 
 class Residual_CNN(Gen_Model):
 	def __init__(self, reg_const, learning_rate, input_dim,  output_dim, hidden_layers):
@@ -169,7 +142,7 @@ class Residual_CNN(Gen_Model):
 
 		model = Model(inputs=[main_input], outputs=[vh, ph])
 		model.compile(loss={'value_head': 'mean_squared_error', 'policy_head': softmax_cross_entropy_with_logits},
-			optimizer=SGD(lr=self.learning_rate, momentum = config.MOMENTUM),	
+			optimizer=SGD(lr=self.learning_rate, momentum = nn_config.MOMENTUM),	
 			loss_weights={'value_head': 0.5, 'policy_head': 0.5}	
 			)
 

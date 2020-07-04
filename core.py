@@ -105,9 +105,9 @@ class Board(object): # Board class represents the gameboard during play.
 		16x8 array of integers representing the amount of points that exists in that location (-1 for void)
 		"""
 
-		width_array = np.zeros((16,8),dtype=int)
-		height_array = np.zeros((16,8),dtype=int)
-		point_array = -1*np.ones((16,8),dtype=int)
+		width_array = np.zeros((self.height,self.width),dtype=int)
+		height_array = np.zeros((self.height,self.width),dtype=int)
+		point_array = -1*np.ones((self.height,self.width),dtype=int)
 
 		for box in self.box:
 			width_array[box.y,box.x] = box.width
