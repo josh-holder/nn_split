@@ -22,8 +22,6 @@ HIDDEN_CNN_LAYERS = [
 	 , {'filters':75, 'kernel_size': (3,3)}
 	 , {'filters':75, 'kernel_size': (3,3)}
 	 , {'filters':75, 'kernel_size': (3,3)}
-	 , {'filters':75, 'kernel_size': (3,3)}
-	 , {'filters':75, 'kernel_size': (3,3)}
 	]
 
 #### EVALUATION

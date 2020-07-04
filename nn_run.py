@@ -11,7 +11,6 @@ import atexit
 import argparse
 import numpy as np
 np.set_printoptions(suppress=True)
-import initialise
 import pickle
 from collections import deque
 import time
@@ -54,7 +53,7 @@ def make_move_MCTS(gameBoard,nn_version,choose_best,split_num):
 	"""
 	start = time.time()
 	root = Node(gameBoard)
-	mcts = MCTS(root,config.CPUCT,current_max_splits)
+	mcts = MCTS(root,nn_config.CPUCT,current_max_splits)
 	search_probs = np.zeros((16*8,1),dtype=float)
 
 	nn_time = 0
@@ -63,8 +62,8 @@ def make_move_MCTS(gameBoard,nn_version,choose_best,split_num):
 	exs_tot_time = 0
 	moves_time = 0
 
-	for i in range(config.MCTS_SEARCH_LEN):
-		#print("Rollout "+str(i+1)+"/"+str(config.MCTS_SEARCH_LEN),end='\r')
+	for i in range(nn_config.MCTS_SEARCH_LEN):
+		#print("Rollout "+str(i+1)+"/"+str(nn_config.MCTS_SEARCH_LEN),end='\r')
 		leaf, breadcrumbs, move_time = mcts.moveToLeaf()
 		value, ex_nn_time, ex_splt_time, ex_tot_time = mcts.expandLeaf(leaf,nn_version)
 		backfill_time = mcts.backFill(leaf,value,breadcrumbs)
@@ -79,7 +78,7 @@ def make_move_MCTS(gameBoard,nn_version,choose_best,split_num):
 	#creates array with the probabilities of each box in the array
 	for move in root.edges:
 		split_box = root.board.box[move.action]
-		prob = move.stats['N']/(config.MCTS_SEARCH_LEN-1)
+		prob = move.stats['N']/(nn_config.MCTS_SEARCH_LEN-1)
 		prob_pos = split_box.y*8+split_box.x
 		
 		search_probs[prob_pos] = prob
@@ -166,7 +165,7 @@ def play_games(nn_version,j,titer):
 
 	timedf_dict = {}
 
-	for game_num in range(int(config.NUM_SELFTRAIN_GAMES/cpu_count())):
+	for game_num in range(int(nn_config.NUM_SELFTRAIN_GAMES/cpu_count())):
 		print("PLAYING GAME NUM "+str(game_num)+" ON CORE "+str(j))
 		gameBoard = core.Board()
 		core.makeMove(gameBoard,0) #makes first trivial split
@@ -250,8 +249,8 @@ def retrain(nn_version,train_overall_loss,train_value_loss,train_policy_loss):
 	"""
 	nn_retrained = copy(nn_version)
 
-	for i in range(config.TRAINING_LOOPS):
-		minibatch = random.sample(memory,min(config.BATCH_SIZE, len(memory))) #selects BATCH_SIZE unique states to retrain the NN on
+	for i in range(nn_config.TRAINING_LOOPS):
+		minibatch = random.sample(memory,min(nn_config.BATCH_SIZE, len(memory))) #selects BATCH_SIZE unique states to retrain the NN on
 		training_states = np.array([state[0] for state in minibatch]) #states that will be evaluated with NN
 		training_targets = {'value_head': np.array([state[2] for state in minibatch])
 							, 'policy_head': np.squeeze(np.array([state[1] for state in minibatch]))}
@@ -266,12 +265,12 @@ def retrain(nn_version,train_overall_loss,train_value_loss,train_policy_loss):
 		print(training_targets['policy_head'])
 		"""
 
-		fit = nn_retrained.model.fit(training_states,training_targets,epochs=config.EPOCHS,verbose=1,validation_split=0,batch_size=32)
+		fit = nn_retrained.model.fit(training_states,training_targets,epochs=nn_config.EPOCHS,verbose=1,validation_split=0,batch_size=32)
 		print("New loss: "+str(fit.history))
 
-		train_overall_loss.append(round(fit.history['loss'][config.EPOCHS - 1],4))
-		train_value_loss.append(round(fit.history['value_head_loss'][config.EPOCHS - 1],4))
-		train_policy_loss.append(round(fit.history['policy_head_loss'][config.EPOCHS - 1],4)) 
+		train_overall_loss.append(round(fit.history['loss'][nn_config.EPOCHS - 1],4))
+		train_value_loss.append(round(fit.history['value_head_loss'][nn_config.EPOCHS - 1],4))
+		train_policy_loss.append(round(fit.history['policy_head_loss'][nn_config.EPOCHS - 1],4)) 
 	
 	return nn_retrained, train_overall_loss, train_value_loss, train_policy_loss
 
@@ -288,7 +287,7 @@ def learn():
 			memory = pickle.load(f)
 	else:
 		print("Previous memory not found: generating empty memory list.")
-		memory = deque(maxlen=config.MEMORY_SIZE)
+		memory = deque(maxlen=nn_config.MEMORY_SIZE)
 
 	nn_path = os.path.join(os.getcwd(),args.run_name,'best_nn.h5')
 	if os.path.exists(nn_path):
@@ -296,7 +295,7 @@ def learn():
 		current_NN = keras.models.load_model(nn_path,custom_objects={'softmax_cross_entropy_with_logits': softmax_cross_entropy_with_logits})
 	else:
 		print("Previous NN not found: generating NN from scratch.")
-		current_NN = Residual_CNN(config.REG_CONST, config.LEARNING_RATE, (16,8,3), 16*8, config.HIDDEN_CNN_LAYERS)
+		current_NN = Residual_CNN(nn_config.REG_CONST, nn_config.LEARNING_RATE, (16,8,3), 16*8, nn_config.HIDDEN_CNN_LAYERS)
 		current_NN.model.save(nn_path)
 	
 	split_hist_path = os.path.join(os.getcwd(),args.run_name,"split_history.pkl")
@@ -339,9 +338,9 @@ def learn():
 
 		end_selfplay = time.time()
 
-		print(str(config.NUM_SELFTRAIN_GAMES) + " games completed in " + str(end_selfplay-start_selfplay)+" seconds.")
+		print(str(nn_config.NUM_SELFTRAIN_GAMES) + " games completed in " + str(end_selfplay-start_selfplay)+" seconds.")
 
-		if len(memory) >= config.MEMORY_SIZE:
+		if len(memory) >= nn_config.MEMORY_SIZE:
 			print("Enough games in memory: updating NN based on this data.")
 			start_update = time.time()
 			new_NN,train_overall_loss,train_value_loss,train_policy_loss = retrain(current_NN,train_overall_loss,train_value_loss,train_policy_loss)
@@ -388,7 +387,7 @@ if __name__ == "__main__":
 	"""
 	global current_max_splits
 	current_max_splits = 0
-	current_NN = Residual_CNN(config.REG_CONST, config.LEARNING_RATE, (16,8,3), 16*8, config.HIDDEN_CNN_LAYERS)
+	current_NN = Residual_CNN(nn_config.REG_CONST, nn_config.LEARNING_RATE, (16,8,3), 16*8, nn_config.HIDDEN_CNN_LAYERS)
 	play_games(current_NN,0)
 	"""
 
