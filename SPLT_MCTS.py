@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import config
 from copy import deepcopy
-from SPLT_TF import get_preds
+from get_preds import get_preds
 import core
 import time
 #import loggers as lg
@@ -81,9 +81,9 @@ class MCTS():
 				Nb = Nb + edge.stats['N']
 
 			for idx, edge in enumerate(currentNode.edges):
-				#print("Edge: "+edge.id)
-				#print("prior = "+str(edge.stats['P']))
-				#print("N = "+str(edge.stats['N']))
+				# print("Edge: "+edge.id)
+				# print("prior = "+str(edge.stats['P']))
+				# print("N = "+str(edge.stats['N']))
 				U = self.cpuct * \
 					((1-epsilon) * edge.stats['P'] + epsilon * nu[idx] )  * \
 					np.sqrt(Nb) / (1 + edge.stats['N'])
