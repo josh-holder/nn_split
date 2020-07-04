@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 #from SPLT_TF import get_gs
 import core
-from SPLT_MCTS import Node, Edge, MCTS
+from splt_mcts import Node, Edge, MCTS
 from splt_model import Residual_CNN
-import config
+import nn_config
 from copy import deepcopy, copy
 import random
 import os
@@ -18,7 +18,7 @@ import time
 import threading
 from multiprocessing import cpu_count
 from tensorflow import keras
-from SPLT_loss import softmax_cross_entropy_with_logits
+from splt_loss import softmax_cross_entropy_with_logits
 import pandas as pd
 
 def _build_parser():
