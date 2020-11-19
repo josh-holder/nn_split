@@ -1,5 +1,5 @@
 # nn-split
-Utilizing neural networks to obtain an optimal playing strategy for SPL-T.
+Utilizing neural networks to obtain an optimal playing strategy for SPL-T (https://simogo.com/work/spl-t/).
 
 Core.py houses the architecture for playing simulated games of SPL-T
 
